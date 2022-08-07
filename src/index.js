@@ -1,45 +1,45 @@
 const { ApolloServer, gql } = require('apollo-server');
-import dotenv = require('dotenv');
+const dotenv = require('dotenv');
 const { MongoClient, ServerApiVersion } = require('mongodb');
 dotenv.config();
 const{DB_URI, DB_NAME} = process.env;
 
-const books = [
-    {
-      title: 'The Awakening ck',
-      author: 'Kate Chopin',
-    },
-    {
-      title: 'City of Glass',
-      author: 'Paul Auster',
-    },
-  ];
 
- 
 
 const typeDefs = gql`
-  
-  # This "Book" type defines the queryable fields for every book in our data source.
-  type Book {
-    title: String
-    author: String
+  type Query {
+    myTaskLists: [TaskList!]!
   }
 
-  # The "Query" type is special: it lists all of the available queries that
-  # clients can execute, along with the return type for each. In this
-  # case, the "books" query returns an array of zero or more Books (defined above).
-  type Query {
-    books: [Book]
+  type User{
+   id: ID!
+   name: String!
+   email: String!
+   avatar: String
   }
+  type TaskList{
+    id:ID!
+    createdAt: String!
+    title: String!
+    progress: Float!
+
+    users:[User!]!
+    todos:[ToDo!]!
+  }
+  type ToDo{
+    id:ID!
+    content: String!
+    isCompleted: Boolean!
+    taskList: TaskList!
+  }
+
 `;
-// Resolvers define the technique for fetching the types defined in the
-// schema. This resolver retrieves books from the "books" array above.
+
 const resolvers = {
-    Query: {
-      books: () => books,
-    },
-  };
-  console.log(DB_URI);
+  Query: {
+    myTaskLists: () => []
+  }
+}
   const {
     ApolloServerPluginLandingPageLocalDefault
   } = require('apollo-server-core');
@@ -49,9 +49,14 @@ const start = async () => {
   await client.connect();
   const db = client.db(DB_NAME);
 
+  const context ={
+    db,
+  }
+
   const server = new ApolloServer({
     typeDefs,
     resolvers,
+    context,
     csrfPrevention: true,
     cache: 'bounded',
    
